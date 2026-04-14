@@ -26,7 +26,6 @@
 #define IDC_DAT                         1017
 #define IDC_MUL                         1018
 #define IDRESULT                        1019
-#define IDC_RESET2                      1020
 #define IDC_SQUARE                      1020
 
 // Next default values for new objects

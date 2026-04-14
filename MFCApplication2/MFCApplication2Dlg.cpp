@@ -14,12 +14,13 @@
 #define new DEBUG_NEW
 #endif
 
-int GetPrecedence(TCHAR op) {
+int GetPrecedence(TCHAR op) {	//연산자 우선 순위 반환 함수
 	if (op == _T('+') || op == _T('-')) return 1;
 	else if (op == _T('*') || op == _T('/')) return 2;
 	return 0;
 }
-double ApplyOp(double a, double b, TCHAR op) {
+
+double ApplyOp(double a, double b, TCHAR op) {	//연산 수행 함수
 	switch (op) {
 		case _T('+'): return a + b;
 		case _T('-'): return a - b;
@@ -31,7 +32,7 @@ double ApplyOp(double a, double b, TCHAR op) {
 	return 0;
 }
 
-double CalculateExpression(CString strExpr) {
+double CalculateExpression(CString strExpr) {	//입력 문자열을 계산 하는 함수
 	std::stack<double> values;
 	std::stack<TCHAR> ops;
 
@@ -248,6 +249,7 @@ void CMFCApplication2Dlg::OnBnClickedResult()
 	if (m_bIsCalculated == TRUE)	return;
 
 	if (m_strLast == _T('+')|| m_strLast == _T('-')|| m_strLast == _T('*')|| m_strLast == _T('/')) return;
+
 	double dResult = CalculateExpression(m_strResult);
 	m_strResult.Format(_T("%g"), dResult);
 
@@ -413,7 +415,7 @@ void CMFCApplication2Dlg::OnBnClickedSquare()
 	int len = m_strResult.GetLength();
 	TCHAR m_strLast = m_strResult[len - 1];
 
-	if (m_strResult.IsEmpty()) return;
+	if (m_strResult.IsEmpty())	return;
 
 	if (m_bIsCalculated == TRUE)	return;
 

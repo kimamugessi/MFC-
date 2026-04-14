@@ -14,13 +14,15 @@
 #define new DEBUG_NEW
 #endif
 
-int GetPrecedence(TCHAR op) {	//연산자 우선 순위 반환 함수
+//======연산자 우선 순위 반환 함수======
+int GetPrecedence(TCHAR op) {	
 	if (op == _T('+') || op == _T('-')) return 1;
 	else if (op == _T('*') || op == _T('/')) return 2;
 	return 0;
 }
 
-double ApplyOp(double a, double b, TCHAR op) {	//연산 수행 함수
+//======연산 수행 함수======
+double ApplyOp(double a, double b, TCHAR op) {	
 	switch (op) {
 		case _T('+'): return a + b;
 		case _T('-'): return a - b;
@@ -32,26 +34,27 @@ double ApplyOp(double a, double b, TCHAR op) {	//연산 수행 함수
 	return 0;
 }
 
-double CalculateExpression(CString strExpr) {	//입력 문자열을 계산 하는 함수
-	std::stack<double> values;
-	std::stack<TCHAR> ops;
+//======입력된 문자열을 계산 하는 함수======
+double CalculateExpression(CString strExpr) {	
+	std::stack<double> values;	//숫자 스택
+	std::stack<TCHAR> ops;	//연산자 스텍
 
 	int len = strExpr.GetLength();
 
-	for (int i = 0; i < len; i++) {
-		TCHAR c = strExpr[i];
-		if (isxdigit(c) || c == _T('.')) {
-			CString strNum = _T("");
-			while (i < len && (_istdigit(strExpr[i]) || strExpr[i] == _T('.'))) {
-				strNum += strExpr[i];
+	for (int i = 0; i < len; i++) {		//문자열의 길이만큼 반복
+		TCHAR c = strExpr[i];	
+		if (isxdigit(c) || c == _T('.')) {	//16진수 또는 '.'일 때
+			CString strNum = _T("");	
+			while (i < len && (_istdigit(strExpr[i]) || strExpr[i] == _T('.'))) { //조건에 맞으면 문자열에 더하기 반복
+				strNum += strExpr[i];	
 				i++;
 			}
-			values.push(_ttof(strNum));
+			values.push(_ttof(strNum));	//_ttof() TCHAR to Float로 변환
 			i--;
 		}
 
-		else if (c == _T('+') || c == _T('-') || c == _T('*') || c == _T('/')) {
-			while (!ops.empty() && GetPrecedence(ops.top()) >= GetPrecedence(c)) {
+		else if (c == _T('+') || c == _T('-') || c == _T('*') || c == _T('/')) {	//연산자일 때
+			while (!ops.empty() && GetPrecedence(ops.top()) >= GetPrecedence(c)) {	//조건에 맞으면 
 				double val2 = values.top(); values.pop();
 				double val1 = values.top(); values.pop();
 				TCHAR op = ops.top(); ops.pop();
@@ -238,7 +241,7 @@ HCURSOR CMFCApplication2Dlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void CMFCApplication2Dlg::OnBnClickedResult()
+void CMFCApplication2Dlg::OnBnClickedResult()	//======'='버튼 클릭======
 {
 	UpdateData(TRUE);
 	int len = m_strResult.GetLength();
@@ -302,7 +305,7 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 	UpdateData(FALSE);
 }
 
-void CMFCApplication2Dlg::OnBnClicked1()
+void CMFCApplication2Dlg::OnBnClicked1()	
 {
 	AppendString(_T("1"));
 }
@@ -393,13 +396,13 @@ void CMFCApplication2Dlg::OnEnChangeEditResult()
 	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
 }
 
-void CMFCApplication2Dlg::OnBnClickedReset()
+void CMFCApplication2Dlg::OnBnClickedReset()	//======'C'버튼 클릭======
 {
 	m_strResult = _T("");
 	UpdateData(FALSE);
 }
 
-void CMFCApplication2Dlg::OnBnClickedDel()
+void CMFCApplication2Dlg::OnBnClickedDel()	//======'CE'버튼 클릭======
 {
 	int len = m_strResult.GetLength();
 	if (len > 0) {
@@ -408,7 +411,7 @@ void CMFCApplication2Dlg::OnBnClickedDel()
 	}
 }
 
-void CMFCApplication2Dlg::OnBnClickedSquare()
+void CMFCApplication2Dlg::OnBnClickedSquare()	//======'x^2'버튼 클릭======
 {
 	UpdateData(TRUE);
 

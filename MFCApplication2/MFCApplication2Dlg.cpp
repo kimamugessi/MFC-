@@ -648,7 +648,7 @@ void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
 		}
 	}
 }
-
+ 
 
 void CMFCApplication2Dlg::OnBnClickedButtonHisclear()
 {

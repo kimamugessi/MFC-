@@ -42,17 +42,26 @@ double CalculateExpression(CString strExpr) {
 	int len = strExpr.GetLength();
 
 	for (int i = 0; i < len; i++) {		//문자열의 길이만큼 반복
-		TCHAR c = strExpr[i];	
+		TCHAR c = strExpr[i];
 		if (isxdigit(c) || c == _T('.')) {	//16진수 또는 '.'일 때
-			CString strNum = _T("");	
+			CString strNum = _T("");
 			while (i < len && (_istdigit(strExpr[i]) || strExpr[i] == _T('.'))) { //조건에 맞으면 문자열에 더하기 반복
-				strNum += strExpr[i];	
+				strNum += strExpr[i];
 				i++;
 			}
 			values.push(_ttof(strNum));	//_ttof() TCHAR to Float로 변환
 			i--;
 		}
-
+		else if (c == _T('(')) ops.push(c);
+		else if (c == _T(')')){
+			while (!ops.empty() && ops.top() != _T('(')) {
+				double val2 = values.top(); values.pop();
+				double val1 = values.top(); values.pop();
+				TCHAR op = ops.top(); ops.pop();
+				values.push(ApplyOp(val1, val2, op));
+			}
+		if (!ops.empty()) ops.pop(); // '(' 제거
+	}
 		else if (c == _T('+') || c == _T('-') || c == _T('*') || c == _T('/')) {	//연산자일 때
 			while (!ops.empty() && GetPrecedence(ops.top()) >= GetPrecedence(c)) {	//조건에 맞으면 
 				double val2 = values.top(); values.pop();
@@ -118,6 +127,7 @@ END_MESSAGE_MAP()
 CMFCApplication2Dlg::CMFCApplication2Dlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFCAPPLICATION2_DIALOG, pParent)
 	, m_strResult(_T(""))
+	, m_strInfo(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -126,6 +136,8 @@ void CMFCApplication2Dlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_RESULT, m_strResult);
+	DDX_Control(pDX, IDC_EDIT_RESULT, m_editResult);
+	DDX_Text(pDX, IDC_EDIT_INFO, m_strInfo);
 }
 
 BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
@@ -150,9 +162,10 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_DAT, &CMFCApplication2Dlg::OnBnClickedDat)
 	ON_BN_CLICKED(IDCANCEL, &CMFCApplication2Dlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_DEL, &CMFCApplication2Dlg::OnBnClickedDel)
-	ON_EN_CHANGE(IDC_EDIT_RESULT, &CMFCApplication2Dlg::OnEnChangeEditResult)
 	ON_BN_CLICKED(IDC_RESET, &CMFCApplication2Dlg::OnBnClickedReset)
 	ON_BN_CLICKED(IDC_SQUARE, &CMFCApplication2Dlg::OnBnClickedSquare)
+	ON_BN_CLICKED(IDC_LPAR, &CMFCApplication2Dlg::OnBnClickedLpar)
+	ON_BN_CLICKED(IDC_RPAR, &CMFCApplication2Dlg::OnBnClickedRpar)
 END_MESSAGE_MAP()
 
 
@@ -189,6 +202,7 @@ BOOL CMFCApplication2Dlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	m_bIsCalculated=FALSE;
+	m_nOpenParen = 0;
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -241,64 +255,99 @@ HCURSOR CMFCApplication2Dlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void CMFCApplication2Dlg::OnBnClickedResult()	//======'='버튼 클릭======
+void CMFCApplication2Dlg::AppendString(CString strInput)	//======버튼 선택시 문자열 처리하는 함수=======
 {
 	UpdateData(TRUE);
+	m_strInfo = _T("");
 	int len = m_strResult.GetLength();
-	TCHAR m_strLast= m_strResult[len-1];
+	TCHAR lastChar = (len > 0) ? m_strResult[len - 1] : _T('\0');
+	BOOL bIsLastOp = (lastChar == _T('+') || lastChar == _T('-') || lastChar == _T('*') || lastChar == _T('/')||lastChar==_T('.'));
 
-	if (m_strResult.IsEmpty()) return;
-
-	if (m_bIsCalculated == TRUE)	return;
-
-	if (m_strLast == _T('+')|| m_strLast == _T('-')|| m_strLast == _T('*')|| m_strLast == _T('/')) return;
-
-	double dResult = CalculateExpression(m_strResult);
-	m_strResult.Format(_T("%g"), dResult);
-
-	m_bIsCalculated = TRUE;
-
-	UpdateData(FALSE);
-}
-void CMFCApplication2Dlg::AppendString(CString strInput)
-{
-	UpdateData(TRUE);
-
-	BOOL bIsInputOp = (strInput == _T("+") || strInput == _T("-") || strInput == _T("*") || strInput == _T("/"));
-	if (m_strResult == _T("") && m_bIsCalculated == FALSE && bIsInputOp)	return;
-	int len = m_strResult.GetLength();
-	BOOL bIsLastOp = FALSE;
-	if (len > 0)
+	BOOL bIsInputOp = (strInput == _T("+") || strInput == _T("-") || strInput == _T("*") || strInput == _T("/")|| strInput == _T("."));
+	
+	// 소수점(.) 중복 입력 방지 
+	if (strInput == _T("."))
 	{
-		TCHAR lastChar = m_strResult[len - 1];
-		if (lastChar == _T('+') || lastChar == _T('-') || lastChar == _T('*') || lastChar == _T('/'))
+		int nLen = m_strResult.GetLength();
+		BOOL bAlreadyHasDot = FALSE;
+
+		// 문자열의 맨 뒤에서부터 앞으로 거꾸로 검사
+		for (int i = nLen - 1; i >= 0; i--)
 		{
-			bIsLastOp = TRUE;
+			TCHAR c = m_strResult[i];
+
+			// 사칙연산자를 만나면 그 앞은 '이전 숫자'이므로 탐색을 종료
+			if (c == _T('+') || c == _T('-') || c == _T('*') || c == _T('/'))
+				break;
+
+			// 연산자를 만나기 전에 이미 점(.)이 발견되면 중복 상태
+			if (c == _T('.'))
+			{
+				bAlreadyHasDot = TRUE;
+				break;
+			}
+		}
+
+		// 이미 점이 있다면 리턴
+		if (bAlreadyHasDot)
+		{
+			m_strInfo = _T("소수점을 확인하세요.");
+			UpdateData(FALSE);
+			return;
 		}
 	}
 
-	if (bIsLastOp && bIsInputOp)
+	if (strInput == _T("(")) {	//'('앞에 숫자일 때 * 연산자 자동 삽입
+		if (len > 0 && (_istdigit(lastChar) || lastChar == _T(')')))
+			m_strResult += _T("*(");
+		else m_strResult += _T("(");
+
+		m_nOpenParen++;
+		m_bIsCalculated = FALSE;
+		UpdateData(FALSE);
+		return;
+	}
+	if (strInput == _T(")")) {
+		if (m_nOpenParen <= 0) {
+			m_strInfo = _T("괄호 갯수가 부족합니다.");
+			UpdateData(FALSE);
+			return;	//'('없을 때 무시
+		}
+
+		if (lastChar == _T('(') || bIsLastOp) {
+			m_strInfo = _T("불필요한 괄호 입니다");
+			UpdateData(FALSE);
+			return;	//'('바로 뒤거나 연산자 뒤이면 무시
+		}
+		m_strResult += _T(')');
+		m_nOpenParen--;
+		m_bIsCalculated = FALSE;
+		UpdateData(FALSE);
+		return;
+	}
+
+	if (bIsLastOp && bIsInputOp)	//마지막과 현재 입력 글자 연산자인지
 	{
 		m_strResult = m_strResult.Left(len - 1);
 		m_strResult += strInput;
 	}
 	else
 	{
-		if (m_bIsCalculated == TRUE)
+		if (m_bIsCalculated == TRUE)	//연산이 끝났을 때(숫자형식의 결과값)
 		{
-			if (bIsInputOp)
+			if (bIsInputOp)	//연산자면 기존 결과에 더하기
 				m_strResult += strInput;
-			else
+			else	//아니면(즉, 숫자면 결과창 지우고 새로 작성)
 				m_strResult = strInput;
 
-			m_bIsCalculated = FALSE;
+			m_bIsCalculated = FALSE;	//처리가 끝났으므로 FALSE처리
 		}
-		else
+		else		
 		{
-			if (m_strResult == _T("0") && !bIsInputOp && strInput != _T("."))
-				m_strResult = strInput;
+			if (m_strResult == _T("0") && !bIsInputOp && strInput != _T("."))	//조건 1. 결과값이 초기값(0)  2. 현재 입력 글자가 연산자가 아니고, 입력 문자가 '.'이 아닐 시
+				m_strResult = strInput;	//현재 입력 문자=결과 변수
 			else
-				m_strResult += strInput;
+				m_strResult += strInput;	//아니면 입력 문자를 결과 변수에 더하기 (배열 추가)
 		}
 	}
 
@@ -386,26 +435,25 @@ void CMFCApplication2Dlg::OnBnClickedCancel()
 	OnOK();
 }
 
-void CMFCApplication2Dlg::OnEnChangeEditResult()
-{
-	// TODO:  RICHEDIT 컨트롤인 경우, 이 컨트롤은
-	// CDialogEx::OnInitDialog() 함수를 재지정 
-	//하고 마스크에 OR 연산하여 설정된 ENM_CHANGE 플래그를 지정하여 CRichEditCtrl().SetEventMask()를 호출하지 않으면
-	// 이 알림 메시지를 보내지 않습니다.
-
-	// TODO:  여기에 컨트롤 알림 처리기 코드를 추가합니다.
-}
-
 void CMFCApplication2Dlg::OnBnClickedReset()	//======'C'버튼 클릭======
 {
 	m_strResult = _T("");
+	m_strInfo = _T("");
+	m_nOpenParen = 0;
+	
 	UpdateData(FALSE);
 }
 
 void CMFCApplication2Dlg::OnBnClickedDel()	//======'CE'버튼 클릭======
 {
+	m_strInfo = _T("");
 	int len = m_strResult.GetLength();
 	if (len > 0) {
+		TCHAR lastChar = m_strResult[len - 1];
+
+		if (lastChar == _T('(')) m_nOpenParen--;
+		else if (lastChar == _T(')')) m_nOpenParen++;
+
 		m_strResult = m_strResult.Left(len - 1);
 		UpdateData(FALSE);
 	}
@@ -414,14 +462,16 @@ void CMFCApplication2Dlg::OnBnClickedDel()	//======'CE'버튼 클릭======
 void CMFCApplication2Dlg::OnBnClickedSquare()	//======'x^2'버튼 클릭======
 {
 	UpdateData(TRUE);
-
+	m_strInfo = _T("");
 	int len = m_strResult.GetLength();
 	TCHAR m_strLast = m_strResult[len - 1];
 
 	if (m_strResult.IsEmpty())	return;
 
-	if (m_bIsCalculated == TRUE)	return;
-
+	if (m_nOpenParen != 0) {
+		m_strInfo = _T("괄호를 확인해주세요.");
+		return;
+	}
 	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) return;
 	double dResult = CalculateExpression(m_strResult)* CalculateExpression(m_strResult);
 	m_strResult.Format(_T("%g"), dResult);
@@ -429,4 +479,94 @@ void CMFCApplication2Dlg::OnBnClickedSquare()	//======'x^2'버튼 클릭======
 	m_bIsCalculated = TRUE;
 
 	UpdateData(FALSE);
+}
+
+void CMFCApplication2Dlg::OnBnClickedResult()	//======'='버튼 클릭======
+{
+	UpdateData(TRUE);
+	m_strInfo = _T("");
+	int len = m_strResult.GetLength();
+	TCHAR m_strLast = m_strResult[len - 1];
+
+	if (m_strResult.IsEmpty()) return;
+
+	if (m_bIsCalculated == TRUE)	return;
+
+	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) return;
+
+	if (m_nOpenParen != 0) {
+		m_strInfo=_T("괄호를 확인해주세요.");
+		UpdateData(FALSE);
+		return;
+	}
+	else
+		m_strInfo = _T("");
+	double dResult = CalculateExpression(m_strResult);
+	m_strResult.Format(_T("%g"), dResult);
+
+	m_bIsCalculated = TRUE;
+
+	UpdateData(FALSE);
+}
+
+BOOL CMFCApplication2Dlg::PreTranslateMessage(MSG* pMsg)	//키보드로 입력 가능하게 하는 함수
+{
+	if (pMsg->message == WM_CHAR)
+	{
+		TCHAR ch = (TCHAR)pMsg->wParam;
+
+		// 숫자이거나 연산자, 소수점인 경우
+		if ((ch >= _T('0') && ch <= _T('9')) ||
+			ch == _T('+') || ch == _T('-') || ch == _T('*') || ch == _T('/') || ch == _T('.'))
+		{
+			CString strInput;
+			strInput.Format(_T("%c"), ch);
+			AppendString(strInput); // 만들어두신 함수 
+
+			return TRUE; // 입력을 가로챘으므로 윈도우에게 "처리 끝났다"고 알려줌 (경고음 방지)
+		}
+
+		// '=' 키를 누르면 결과 계산
+		if (ch == _T('='))
+		{
+			OnBnClickedResult();
+			return TRUE;
+		}
+	}
+
+	// 엔터(계산), 백스페이스(지우기), ESC(초기화)
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		switch (pMsg->wParam)
+		{
+		case VK_RETURN: // 엔터(Enter) 키
+			OnBnClickedResult();
+			return TRUE;
+
+		case VK_BACK:   // 백스페이스(Backspace) 키
+			OnBnClickedDel(); // 만들어두신 지우기 함수 호출
+			return TRUE;
+
+		case VK_ESCAPE: // ESC 키
+			OnBnClickedCancel(); // 만들어두신 초기화 함수 호출
+			return TRUE;
+		case VK_DELETE:
+			OnBnClickedReset();
+			return TRUE;		
+		}
+	}
+
+	// 우리가 처리하지 않은 나머지 모든 키보드/마우스 입력은 원래대로 작동하게 냅둡니다.
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+void CMFCApplication2Dlg::OnBnClickedLpar()
+{
+	AppendString(_T("("));
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedRpar()
+{
+	AppendString(_T(")"));
 }

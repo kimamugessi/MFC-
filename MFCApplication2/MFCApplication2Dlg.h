@@ -53,8 +53,15 @@ public:
 	afx_msg void OnBnClickedAdd();
 	afx_msg void OnBnClickedDat();
 	afx_msg void OnBnClickedCancel();
-	afx_msg void OnEnChangeEditResult();
 	afx_msg void OnBnClickedDel();
 	afx_msg void OnBnClickedReset();
 	afx_msg void OnBnClickedSquare();
+	BOOL PreTranslateMessage(MSG* pMsg);
+	CEdit m_editResult;
+	afx_msg void OnBnClickedLpar();
+	afx_msg void OnBnClickedRpar();
+	int m_nOpenParen;
+	// CEdit m_strInfo;// CEdit m_strInfo;
+//	CString m_strInFo;
+	CString m_strInfo;
 };

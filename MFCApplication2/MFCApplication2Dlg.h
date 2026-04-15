@@ -64,4 +64,7 @@ public:
 	// CEdit m_strInfo;// CEdit m_strInfo;
 //	CString m_strInFo;
 	CString m_strInfo;
+	CListBox m_listHistory;
+	afx_msg void OnLbnSelchangeListHistory();
+	afx_msg void OnBnClickedButtonHisclear();
 };

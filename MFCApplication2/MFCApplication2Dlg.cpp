@@ -99,8 +99,8 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_LPAR, &CMFCApplication2Dlg::OnBnClickedLpar)
 	ON_BN_CLICKED(IDC_RPAR, &CMFCApplication2Dlg::OnBnClickedRpar)
 	ON_LBN_SELCHANGE(IDC_LIST_History, &CMFCApplication2Dlg::OnLbnSelchangeListHistory)
-	ON_BN_CLICKED(IDC_BUTTON_HisClear, &CMFCApplication2Dlg::OnBnClickedButtonHisclear)
-	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHissave)
+	ON_BN_CLICKED(IDC_BUTTON_HisClear, &CMFCApplication2Dlg::OnBnClickedButtonHisClear)
+	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHisSave)
 END_MESSAGE_MAP()
 
 
@@ -535,7 +535,7 @@ void CMFCApplication2Dlg::OnBnClickedSquare()
 		return;
 	}
 	
-	CString m_strSaveResult = m_strResult+_T("^2");	//계산식을 임시로 저장
+	CString m_strSaveResult = _T("(")+ m_strResult+_T(")")+_T("^2");	//계산식을 임시로 저장
 	double dResult = CalculateExpression(m_strResult) * CalculateExpression(m_strResult);
 	m_strResult.Format(_T("%g"), dResult);
 
@@ -546,13 +546,13 @@ void CMFCApplication2Dlg::OnBnClickedSquare()
 	m_listHistory.AddString(strHistory);
 	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
 
-	//문자열의 길이에 따라 가로 스크롤 자동 조절 (이해가 필요함 너무 어려움!)
-	CClientDC dc(this);
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());
+	//문자열의 길이에 따라 가로 스크롤 자동 조절 
+	CClientDC dc(this);	//가상의 도화지 같은..?
+	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
 	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
 	dc.SelectObject(pOldFont);
 
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {
+	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
 		m_listHistory.SetHorizontalExtent(size.cx + 20);
 	}
 
@@ -596,7 +596,6 @@ void CMFCApplication2Dlg::OnBnClickedResult()
 	m_listHistory.AddString(strHistory);
 	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);	//인덱스가 0부터 시작해서 -1을함
 
-	//이해가 필요함 너무 어려움!
 	CClientDC dc(this);
 	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());
 	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
@@ -661,11 +660,11 @@ BOOL CMFCApplication2Dlg::PreTranslateMessage(MSG* pMsg)
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
+
 void CMFCApplication2Dlg::OnBnClickedLpar()
 {
 	AppendString(_T("("));
 }
-
 
 void CMFCApplication2Dlg::OnBnClickedRpar()
 {
@@ -693,7 +692,7 @@ void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
 }
  
 //기록창의 클리어키 누를 때
-void CMFCApplication2Dlg::OnBnClickedButtonHisclear()
+void CMFCApplication2Dlg::OnBnClickedButtonHisClear()
 {
 	UpdateData(TRUE);
 	m_listHistory.ResetContent();
@@ -708,7 +707,7 @@ CMFCApplication2Dlg::~CMFCApplication2Dlg()
 }
 
 //Save 버튼 누를 때
-void CMFCApplication2Dlg::OnBnClickedButtonHissave()
+void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
 {
 	if (m_listHistory.GetCount() == 0) {	//기록이 없을 때
 		m_strInfo = (_T("기록이 없습니다."));
@@ -717,7 +716,7 @@ void CMFCApplication2Dlg::OnBnClickedButtonHissave()
 	}
 		CTime d = CTime::GetCurrentTime();
 
-		CString strRootFloder = (_T("E:\\log"));	//무조건 기존에 있는 폴더
+		CString strRootFloder = (_T("E:\\log"));	//고정 폴더
 		CString strDataFloder = d.Format(_T("E:\\log\\%y%m%d"));	//새로 생성하는 폴더
 		CString strPath = d.Format(_T("E:\\log\\%y%m%d\\%H%M%S.ini"));	//파일 저장 경로
 

@@ -65,9 +65,9 @@ public:
 	CString m_strInfo;
 	CListBox m_listHistory;
 	afx_msg void OnLbnSelchangeListHistory();
-	afx_msg void OnBnClickedButtonHisclear();
+	afx_msg void OnBnClickedButtonHisClear();
 
 	CFont m_fontResult; //결과창에 폰트 설정
 
-	afx_msg void OnBnClickedButtonHissave();
+	afx_msg void OnBnClickedButtonHisSave();
 };

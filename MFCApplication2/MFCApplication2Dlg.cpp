@@ -101,6 +101,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_LBN_SELCHANGE(IDC_LIST_History, &CMFCApplication2Dlg::OnLbnSelchangeListHistory)
 	ON_BN_CLICKED(IDC_BUTTON_HisClear, &CMFCApplication2Dlg::OnBnClickedButtonHisClear)
 	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHisSave)
+	ON_BN_CLICKED(IDC_BUTTON_HisRead, &CMFCApplication2Dlg::OnBnClickedButtonHisread)
 END_MESSAGE_MAP()
 
 
@@ -728,7 +729,8 @@ void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
 		
 		int listCount = m_listHistory.GetCount();
 		CStdioFile file;
-		if (file.Open(strPath, CFile::modeCreate | CFile::modeWrite | CFile::typeText)) {
+		if (file.Open(strPath, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeWrite | CFile::typeText)) {
+			file.SeekToEnd();
 			CString strLine;
 
 			for (int i = 0; i < listCount; i++) {
@@ -738,8 +740,13 @@ void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
 			}
 			file.Close();
 		}
+
 		m_strInfo.Format(_T("%s"), strPath.GetString());
 		UpdateData(FALSE);
-	
-	
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedButtonHisread()
+{
+
 }

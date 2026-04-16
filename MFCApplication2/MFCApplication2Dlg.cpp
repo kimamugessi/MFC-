@@ -696,6 +696,9 @@ void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
 void CMFCApplication2Dlg::OnBnClickedButtonHisClear()
 {
 	UpdateData(TRUE);
+	m_strResult = _T("");
+	m_strInfo = _T("");
+	m_nOpenParen = 0;
 	m_listHistory.ResetContent();
 	UpdateData(FALSE);
 }
@@ -717,14 +720,14 @@ void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
 	}
 		CTime d = CTime::GetCurrentTime();
 
-		CString strRootFloder = (_T("E:\\log"));	//고정 폴더
-		CString strDataFloder = d.Format(_T("E:\\log\\%y%m%d"));	//새로 생성하는 폴더
+		CString strRootFolder = (_T("E:\\log"));	//고정 폴더
+		CString strDataFolder = d.Format(_T("E:\\log\\%y%m%d"));	//새로 생성하는 폴더
 		CString strPath = d.Format(_T("E:\\log\\%y%m%d\\%H.ini"));	//파일 저장 경로
-		if (!PathFileExists(strRootFloder)) {	//폴더가 없으면 생성(메모리 값 보완용)
-			::CreateDirectory(strRootFloder, NULL);
+		if (!PathFileExists(strRootFolder)) {	//폴더가 없으면 생성(메모리 값 보완용)
+			::CreateDirectory(strRootFolder, NULL);
 		}
-		if (!PathFileExists(strDataFloder)) {	//폴더가 없으면 생성(메모리 값 보완용)
-			::CreateDirectory(strDataFloder, NULL);		// :: 는 C++에서 전역 네임스페이스를 명시  사용 이유: 내가 만든게 아닌 윈도우가 제공하는 전용API에서 가져다 쓴 것을 의미
+		if (!PathFileExists(strDataFolder)) {	//폴더가 없으면 생성(메모리 값 보완용)
+			::CreateDirectory(strDataFolder, NULL);		// :: 는 C++에서 전역 네임스페이스를 명시  사용 이유: 내가 만든게 아닌 윈도우가 제공하는 전용API에서 가져다 쓴 것을 의미
 		}
 		
 		int listCount = m_listHistory.GetCount();
@@ -748,5 +751,25 @@ void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
 
 void CMFCApplication2Dlg::OnBnClickedButtonHisread()
 {
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("텍스트 파일 (*.ini)|*.ini|모든 파일 (*.*)|*.*||"));
+	if (dlg.DoModal() == IDOK) {
+		CString strPath = dlg.GetPathName(); 
 
+		CStdioFile file;
+		if (!file.Open(strPath, CFile::modeRead|CFile::typeText)) {
+			m_strInfo=(_T("파일을 열지 못했습니다."));
+			UpdateData(FALSE);
+			return;
+		}
+		m_listHistory.ResetContent();
+
+		CString strLine;
+		while (file.ReadString(strLine)) {
+			m_listHistory.AddString(strLine);
+		}
+		file.Close();
+
+		m_strInfo.Format(_T("불러오기 성공"), dlg.GetFileName().GetString());
+		UpdateData(FALSE);	
+	}
 }

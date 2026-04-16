@@ -718,10 +718,13 @@ void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
 
 		CString strRootFloder = (_T("E:\\log"));	//고정 폴더
 		CString strDataFloder = d.Format(_T("E:\\log\\%y%m%d"));	//새로 생성하는 폴더
-		CString strPath = d.Format(_T("E:\\log\\%y%m%d\\%H%M%S.ini"));	//파일 저장 경로
-
-		::CreateDirectory(strRootFloder, NULL);		// :: 는 C++에서 전역 네임스페이스를 명시  사용 이유: 내가 만든게 아닌 윈도우가 제공하는 전용API에서 가져다 쓴 것을 의미
-		::CreateDirectory(strDataFloder, NULL);		
+		CString strPath = d.Format(_T("E:\\log\\%y%m%d\\%H.ini"));	//파일 저장 경로
+		if (!PathFileExists(strRootFloder)) {	//폴더가 없으면 생성(메모리 값 보완용)
+			::CreateDirectory(strRootFloder, NULL);
+		}
+		if (!PathFileExists(strDataFloder)) {	//폴더가 없으면 생성(메모리 값 보완용)
+			::CreateDirectory(strDataFloder, NULL);		// :: 는 C++에서 전역 네임스페이스를 명시  사용 이유: 내가 만든게 아닌 윈도우가 제공하는 전용API에서 가져다 쓴 것을 의미
+		}
 		
 		int listCount = m_listHistory.GetCount();
 		CStdioFile file;

@@ -4,14 +4,13 @@
 
 #pragma once
 
-
 // CMFCApplication2Dlg 대화 상자
 class CMFCApplication2Dlg : public CDialogEx
 {
 // 생성입니다.
 public:
 	CMFCApplication2Dlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
-
+	~CMFCApplication2Dlg();
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_MFCAPPLICATION2_DIALOG };
@@ -67,4 +66,8 @@ public:
 	CListBox m_listHistory;
 	afx_msg void OnLbnSelchangeListHistory();
 	afx_msg void OnBnClickedButtonHisclear();
+
+	CFont m_fontResult; //결과창에 폰트 설정
+
+	afx_msg void OnBnClickedButtonHissave();
 };

@@ -34,6 +34,7 @@
 #define IDC_EDIT_INFO                   1025
 #define IDC_LIST_History                1026
 #define IDC_BUTTON_HisClear             1028
+#define IDC_BUTTON_HisSave              1029
 
 // Next default values for new objects
 // 

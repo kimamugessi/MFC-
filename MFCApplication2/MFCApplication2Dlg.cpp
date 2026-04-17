@@ -103,7 +103,10 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHisSave)
 	ON_BN_CLICKED(IDC_BUTTON_HisRead, &CMFCApplication2Dlg::OnBnClickedButtonHisRead)
 	ON_WM_TIMER()
-	ON_BN_CLICKED(IDC_BUTTON_HisDeletOne, &CMFCApplication2Dlg::OnBnClickedButtonHisdeletone)
+	ON_BN_CLICKED(IDC_BUTTON_HisDeletOne, &CMFCApplication2Dlg::OnBnClickedButtonHisDeletOne)
+	ON_BN_CLICKED(IDC_Percent, &CMFCApplication2Dlg::OnBnClickedPercent)
+	ON_BN_CLICKED(IDC_Inverse, &CMFCApplication2Dlg::OnBnClickedInverse)
+	ON_BN_CLICKED(IDC_SIGN, &CMFCApplication2Dlg::OnBnClickedSign)
 END_MESSAGE_MAP()
 
 
@@ -546,23 +549,22 @@ void CMFCApplication2Dlg::OnBnClickedRpar()
 	AppendString(_T(")"));
 }
 
-//======기록창에 있는 목록 누를 때======
-void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
+//======기록창 위 'Del' 버튼 눌렀을 때======
+void CMFCApplication2Dlg::OnBnClickedButtonHisDeletOne()
 {
-	int nIndex = m_listHistory.GetCurSel();
+	CString strText;
+	int index = m_listHistory.GetCurSel();
+	m_listHistory.GetText(index, strText);
 
-	if (nIndex != LB_ERR) {
-		CString strSelected;
-		m_listHistory.GetText(nIndex, strSelected);
+	if (index != LB_ERR) {
+		m_strInfo.Format(_T("Delet: %s"), strText.GetString());
 
-		int nPos = strSelected.Find(_T('='));
-		if (nPos != -1) {
-			m_strResult = strSelected.Mid(nPos + 1);
-			m_strResult.Trim(); //양옆 띄어쓰기 지우기
-
-			m_bIsCalculated = TRUE;
-			UpdateData(FALSE);
-		}
+		m_listHistory.DeleteString(index);
+		UpdateData(FALSE);
+	}
+	else {
+		m_strResult = _T("삭제할 항목을 먼저 선택하세요.");
+		UpdateData(FALSE);
 	}
 }
  
@@ -643,6 +645,26 @@ void CMFCApplication2Dlg::OnBnClickedButtonHisRead()
 	}
 }
 #pragma endregion
+
+//======기록창에 있는 목록 누를 때======
+void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
+{
+	int nIndex = m_listHistory.GetCurSel();
+
+	if (nIndex != LB_ERR) {
+		CString strSelected;
+		m_listHistory.GetText(nIndex, strSelected);
+
+		int nPos = strSelected.Find(_T('='));
+		if (nPos != -1) {
+			m_strResult = strSelected.Mid(nPos + 1);
+			m_strResult.Trim(); //양옆 띄어쓰기 지우기
+
+			m_bIsCalculated = TRUE;
+			UpdateData(FALSE);
+		}
+	}
+}
 
 //======버튼 선택시 문자열 처리하는 함수=======
 void CMFCApplication2Dlg::AppendString(CString strInput)
@@ -789,20 +811,103 @@ CMFCApplication2Dlg::~CMFCApplication2Dlg()
 		m_fontResult.DeleteObject();
 }
 
-void CMFCApplication2Dlg::OnBnClickedButtonHisdeletone()
+
+//======'%' 버튼 눌렀을 때======
+void CMFCApplication2Dlg::OnBnClickedPercent()
 {
-	CString strText;
-	int index = m_listHistory.GetCurSel();
-	m_listHistory.GetText(index, strText);
+	UpdateData(TRUE);
+	m_strInfo = _T("");
 
-	if (index !=LB_ERR) {
-		m_strInfo.Format(_T("Delet: %s"), strText.GetString());
+	if (m_strResult.IsEmpty())	return;
 
-		m_listHistory.DeleteString(index);
-		UpdateData(FALSE); 
-	}
-	else {
-		m_strResult = _T("삭제할 항목을 먼저 선택하세요.");
+	int len = m_strResult.GetLength();
+	TCHAR m_strLast = m_strResult[len - 1];
+
+	if (m_nOpenParen != 0) {	//괄호가 남아있을 때
+		m_strInfo = _T("괄호를 확인하세요.");
 		UpdateData(FALSE);
+		return;
 	}
+
+	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) {	//연산자로 끝날 때
+		m_strInfo = _T("수식을 완성하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+
+	CString m_strSaveResult = _T("(") + m_strResult + _T(")") + _T("%");	//계산식을 임시로 저장
+	double dResult = CalculateExpression(m_strResult) / 100;
+	m_strResult.Format(_T("%g"), dResult);
+
+	m_bIsCalculated = TRUE;
+
+	CString strHistory;
+	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
+	m_listHistory.AddString(strHistory);
+	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
+
+	//문자열의 길이에 따라 가로 스크롤 자동 조절 
+	CClientDC dc(this);	//가상의 도화지 같은..?
+	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
+	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
+	dc.SelectObject(pOldFont);
+
+	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
+		m_listHistory.SetHorizontalExtent(size.cx + 20);
+	}
+
+	UpdateData(FALSE);
+}
+
+//======'1/x' 버튼 눌렀을 때======
+void CMFCApplication2Dlg::OnBnClickedInverse()
+{
+	UpdateData(TRUE);
+	m_strInfo = _T("");
+
+	if (m_strResult.IsEmpty())	return;
+
+	int len = m_strResult.GetLength();
+	TCHAR m_strLast = m_strResult[len - 1];
+
+	if (m_nOpenParen != 0) {	//괄호가 남아있을 때
+		m_strInfo = _T("괄호를 확인하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+
+	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) {	//연산자로 끝날 때
+		m_strInfo = _T("수식을 완성하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+
+	CString m_strSaveResult = _T("1/(") + m_strResult + _T(")") ;	//계산식을 임시로 저장
+	double dResult = 1/ CalculateExpression(m_strResult);
+	m_strResult.Format(_T("%g"), dResult);
+
+	m_bIsCalculated = TRUE;
+
+	CString strHistory;
+	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
+	m_listHistory.AddString(strHistory);
+	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
+
+	//문자열의 길이에 따라 가로 스크롤 자동 조절 
+	CClientDC dc(this);	//가상의 도화지 같은..?
+	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
+	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
+	dc.SelectObject(pOldFont);
+
+	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
+		m_listHistory.SetHorizontalExtent(size.cx + 20);
+	}
+
+	UpdateData(FALSE);
+}
+
+
+void CMFCApplication2Dlg::OnBnClickedSign()
+{
+
 }

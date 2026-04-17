@@ -28,11 +28,14 @@
 #define IDRESULT                        1019
 #define IDC_SQUARE                      1020
 #define IDC_EDIT1                       1021
+#define IDC_Percent                     1021
 #define IDC_10                          1022
 #define IDC_LPAR                        1022
 #define IDC_RPAR                        1023
+#define IDC_Inverse                     1024
 #define IDC_EDIT_INFO                   1025
 #define IDC_LIST_History                1026
+#define IDC_SIGN                        1027
 #define IDC_BUTTON_HisClear             1028
 #define IDC_BUTTON_HisSave              1029
 #define IDC_BUTTON_HisRead              1030

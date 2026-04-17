@@ -72,5 +72,8 @@ public:
 	afx_msg void OnBnClickedButtonHisSave();
 	afx_msg void OnBnClickedButtonHisRead();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnBnClickedButtonHisdeletone();
+	afx_msg void OnBnClickedButtonHisDeletOne();
+	afx_msg void OnBnClickedPercent();
+	afx_msg void OnBnClickedInverse();
+	afx_msg void OnBnClickedSign();
 };

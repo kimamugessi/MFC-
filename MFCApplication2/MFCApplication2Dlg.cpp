@@ -103,6 +103,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHisSave)
 	ON_BN_CLICKED(IDC_BUTTON_HisRead, &CMFCApplication2Dlg::OnBnClickedButtonHisRead)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_HisDeletOne, &CMFCApplication2Dlg::OnBnClickedButtonHisdeletone)
 END_MESSAGE_MAP()
 
 
@@ -396,7 +397,7 @@ void CMFCApplication2Dlg::OnBnClickedResult()
 	CString strHistory;
 	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
 	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);	//인덱스가 0부터 시작해서 -1을함
+	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);	//인덱스가 0부터 시작해서 GetCount() -1을함
 
 	CClientDC dc(this);
 	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());
@@ -786,4 +787,22 @@ CMFCApplication2Dlg::~CMFCApplication2Dlg()
 {
 	if (m_fontResult.GetSafeHandle())
 		m_fontResult.DeleteObject();
+}
+
+void CMFCApplication2Dlg::OnBnClickedButtonHisdeletone()
+{
+	CString strText;
+	int index = m_listHistory.GetCurSel();
+	m_listHistory.GetText(index, strText);
+
+	if (index !=LB_ERR) {
+		m_strInfo.Format(_T("Delet: %s"), strText.GetString());
+
+		m_listHistory.DeleteString(index);
+		UpdateData(FALSE); 
+	}
+	else {
+		m_strResult = _T("삭제할 항목을 먼저 선택하세요.");
+		UpdateData(FALSE);
+	}
 }

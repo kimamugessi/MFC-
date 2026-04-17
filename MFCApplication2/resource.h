@@ -36,6 +36,7 @@
 #define IDC_BUTTON_HisClear             1028
 #define IDC_BUTTON_HisSave              1029
 #define IDC_BUTTON_HisRead              1030
+#define IDC_BUTTON_HisDeletOne          1031
 
 // Next default values for new objects
 // 

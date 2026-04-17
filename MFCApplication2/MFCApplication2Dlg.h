@@ -61,8 +61,6 @@ public:
 	afx_msg void OnBnClickedLpar();
 	afx_msg void OnBnClickedRpar();
 	int m_nOpenParen;
-	// CEdit m_strInfo;// CEdit m_strInfo;
-//	CString m_strInFo;
 	CString m_strInfo;
 	CListBox m_listHistory;
 	afx_msg void OnLbnSelchangeListHistory();

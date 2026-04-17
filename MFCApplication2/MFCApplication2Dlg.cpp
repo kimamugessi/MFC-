@@ -400,18 +400,8 @@ void CMFCApplication2Dlg::OnBnClickedResult()
 
 	CString strHistory;
 	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
-	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);	//인덱스가 0부터 시작해서 GetCount() -1을함
-
-	CClientDC dc(this);
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());
-	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
-	dc.SelectObject(pOldFont);
-
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {
-		m_listHistory.SetHorizontalExtent(size.cx + 20);
-	}
-
+	
+	AddHistoryItem(strHistory);
 	UpdateData(FALSE);
 }
 
@@ -446,19 +436,8 @@ void CMFCApplication2Dlg::OnBnClickedSquare()
 
 	CString strHistory;
 	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
-	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
 
-	//문자열의 길이에 따라 가로 스크롤 자동 조절 
-	CClientDC dc(this);	//가상의 도화지 같은..?
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
-	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
-	dc.SelectObject(pOldFont);
-
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
-		m_listHistory.SetHorizontalExtent(size.cx + 20);
-	}
-
+	AddHistoryItem(strHistory);
 	UpdateData(FALSE);
 }
 
@@ -488,7 +467,7 @@ void CMFCApplication2Dlg::OnBnClickedDel()
 	}
 }
 
-//======키보드로 입력 가능하게 하는 함수======
+//======키보드로 입력 가능하게 하는 메서드======
 BOOL CMFCApplication2Dlg::PreTranslateMessage(MSG* pMsg)	
 {
 	if (pMsg->message == WM_CHAR)
@@ -677,19 +656,8 @@ void CMFCApplication2Dlg::OnBnClickedPercent()
 
 	CString strHistory;
 	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
-	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
-
-	//문자열의 길이에 따라 가로 스크롤 자동 조절 
-	CClientDC dc(this);	//가상의 도화지 같은..?
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
-	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
-	dc.SelectObject(pOldFont);
-
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
-		m_listHistory.SetHorizontalExtent(size.cx + 20);
-	}
-
+	
+	AddHistoryItem(strHistory);
 	UpdateData(FALSE);
 }
 
@@ -724,19 +692,8 @@ void CMFCApplication2Dlg::OnBnClickedInverse()
 
 	CString strHistory;
 	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
-	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
 
-	//문자열의 길이에 따라 가로 스크롤 자동 조절 
-	CClientDC dc(this);	//가상의 도화지 같은..?
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
-	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
-	dc.SelectObject(pOldFont);
-
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
-		m_listHistory.SetHorizontalExtent(size.cx + 20);
-	}
-
+	AddHistoryItem(strHistory);
 	UpdateData(FALSE);
 }
 
@@ -747,6 +704,21 @@ void CMFCApplication2Dlg::OnBnClickedSign()
 }
 
 #pragma endregion
+
+//======문자열의 길이에 따라 가로 스크롤 자동 조절 메서드======
+void CMFCApplication2Dlg::AddHistoryItem(CString strItem) {
+	m_listHistory.AddString(strItem);
+	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
+
+	CClientDC dc(this);	//가상의 도화지 같은..?
+	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
+	CSize size = dc.GetTextExtent(strItem); // 입력된 글자의 실제 픽셀 길이를 계산
+	dc.SelectObject(pOldFont);
+
+	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
+		m_listHistory.SetHorizontalExtent(size.cx + 20);
+	}
+}
 
 //======기록창에 있는 목록 선택이 바뀔 때======
 void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
@@ -768,7 +740,7 @@ void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
 	}
 }
 
-//======버튼 선택시 문자열 처리하는 함수=======
+//======버튼 선택시 문자열 처리하는 메서드=======
 void CMFCApplication2Dlg::AppendString(CString strInput)
 {
 	UpdateData(TRUE);
@@ -976,5 +948,3 @@ CMFCApplication2Dlg::~CMFCApplication2Dlg()
 	if (m_fontResult.GetSafeHandle())
 		m_fontResult.DeleteObject();
 }
-
-

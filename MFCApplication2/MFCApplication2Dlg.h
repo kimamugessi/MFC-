@@ -11,6 +11,7 @@ class CMFCApplication2Dlg : public CDialogEx
 public:
 	CMFCApplication2Dlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.
 	~CMFCApplication2Dlg();
+	void AddHistoryItem(CString strItem);
 // 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_MFCAPPLICATION2_DIALOG };

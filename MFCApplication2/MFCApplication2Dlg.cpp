@@ -733,6 +733,60 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 		return;
 	}
 
+	if (strInput == _T("S")) {	//여기부분은 이해가 더 필요함
+
+		if (m_strResult.IsEmpty() || m_strResult == _T("0")) {	//덮어쓰는 코드
+			m_strResult=_T("(-");
+			m_nOpenParen++;
+			UpdateData(FALSE);
+			return;
+		}
+		
+		if (m_strResult == _T("(-")) {
+			m_strResult = _T("");
+			m_nOpenParen--;
+			UpdateData(FALSE);
+			return;
+		}
+
+		if (m_bIsCalculated == TRUE) {	//
+			double val = _ttof(m_strResult);
+			val = val * -1;
+			m_strResult.Format(_T("%g", val));
+			UpdateData(FALSE);
+			return;
+		}
+		if ( (lastChar == _T('('))||bIsInputOp) {
+			m_strResult += _T("(-");
+			m_nOpenParen++;
+		}
+		else if (lastChar == _T(')')) {
+			m_strResult += _T("*(-");
+			m_nOpenParen++;
+		}
+		else if (_istdigit(lastChar) || lastChar == _T('.')) {
+			int i = len - 1;
+			while (i >= 0 && (_istdigit(m_strResult[i]) || m_strResult[i] == _T('.'))) {
+				i--;
+			}
+
+			CString leftPart = m_strResult.Left(i + 1);
+			CString numPart = m_strResult.Mid(i + 1);
+
+			if (i >= 1 && m_strResult[i] == _T('-') && m_strResult[i - 1] == _T('(')) {
+				leftPart = m_strResult.Left(i - 1);
+				m_strResult = leftPart + numPart;
+				m_nOpenParen--;
+			}
+			else {
+				m_strResult = leftPart + _T("(-") + numPart;
+				m_nOpenParen++;
+			}
+		}
+		m_bIsCalculated = FALSE;
+		UpdateData(FALSE);
+		return;
+	}
 	if (strInput == _T(".")) {	//'.'앞에 연산자일 때 '0' 자동 삽입
 		if (!_istdigit(lastChar))
 			m_strResult += _T("0.");
@@ -909,5 +963,5 @@ void CMFCApplication2Dlg::OnBnClickedInverse()
 
 void CMFCApplication2Dlg::OnBnClickedSign()
 {
-
+	AppendString(_T("S"));
 }

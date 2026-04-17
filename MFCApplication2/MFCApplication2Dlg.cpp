@@ -103,7 +103,7 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHisSave)
 	ON_BN_CLICKED(IDC_BUTTON_HisRead, &CMFCApplication2Dlg::OnBnClickedButtonHisRead)
 	ON_WM_TIMER()
-	ON_BN_CLICKED(IDC_BUTTON_HisDeletOne, &CMFCApplication2Dlg::OnBnClickedButtonHisDeletOne)
+	ON_BN_CLICKED(IDC_BUTTON_HisDeleteOne, &CMFCApplication2Dlg::OnBnClickedButtonHisDeleteOne)
 	ON_BN_CLICKED(IDC_Percent, &CMFCApplication2Dlg::OnBnClickedPercent)
 	ON_BN_CLICKED(IDC_Inverse, &CMFCApplication2Dlg::OnBnClickedInverse)
 	ON_BN_CLICKED(IDC_SIGN, &CMFCApplication2Dlg::OnBnClickedSign)
@@ -550,21 +550,22 @@ void CMFCApplication2Dlg::OnBnClickedRpar()
 }
 
 //======기록창 위 'Del' 버튼 눌렀을 때======
-void CMFCApplication2Dlg::OnBnClickedButtonHisDeletOne()
+void CMFCApplication2Dlg::OnBnClickedButtonHisDeleteOne()
 {
-	CString strText;
 	int index = m_listHistory.GetCurSel();
-	m_listHistory.GetText(index, strText);
-
+	
 	if (index != LB_ERR) {
-		m_strInfo.Format(_T("Delet: %s"), strText.GetString());
+		CString strText;
+		m_listHistory.GetText(index, strText);
+		m_strInfo.Format(_T("Delete: %s"), strText.GetString());
 
 		m_listHistory.DeleteString(index);
 		UpdateData(FALSE);
 	}
 	else {
-		m_strResult = _T("삭제할 항목을 먼저 선택하세요.");
+		m_strInfo = _T("삭제할 항목을 먼저 선택하세요.");
 		UpdateData(FALSE);
+		return;
 	}
 }
  
@@ -752,11 +753,11 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 		if (m_bIsCalculated == TRUE) {	//
 			double val = _ttof(m_strResult);
 			val = val * -1;
-			m_strResult.Format(_T("%g", val));
+			m_strResult.Format(_T("%g"), val);
 			UpdateData(FALSE);
 			return;
 		}
-		if ( (lastChar == _T('('))||bIsInputOp) {
+		if ((lastChar == _T('('))||bIsInputOp) {
 			m_strResult += _T("(-");
 			m_nOpenParen++;
 		}
@@ -788,8 +789,13 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 		return;
 	}
 	if (strInput == _T(".")) {	//'.'앞에 연산자일 때 '0' 자동 삽입
-		if (!_istdigit(lastChar))
+		if (!_istdigit(lastChar)) {
+			if (lastChar == _T(')')) {
+				m_strResult += _T("*0.");
+			}
+			else
 			m_strResult += _T("0.");
+		}
 		else m_strResult += _T(".");
 
 		m_bIsCalculated = FALSE;

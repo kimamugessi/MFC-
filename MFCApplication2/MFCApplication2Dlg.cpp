@@ -101,7 +101,8 @@ BEGIN_MESSAGE_MAP(CMFCApplication2Dlg, CDialogEx)
 	ON_LBN_SELCHANGE(IDC_LIST_History, &CMFCApplication2Dlg::OnLbnSelchangeListHistory)
 	ON_BN_CLICKED(IDC_BUTTON_HisClear, &CMFCApplication2Dlg::OnBnClickedButtonHisClear)
 	ON_BN_CLICKED(IDC_BUTTON_HisSave, &CMFCApplication2Dlg::OnBnClickedButtonHisSave)
-	ON_BN_CLICKED(IDC_BUTTON_HisRead, &CMFCApplication2Dlg::OnBnClickedButtonHisread)
+	ON_BN_CLICKED(IDC_BUTTON_HisRead, &CMFCApplication2Dlg::OnBnClickedButtonHisRead)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -196,12 +197,6 @@ void CMFCApplication2Dlg::OnPaint()
 	}
 }
 
-// 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
-//  이 함수를 호출합니다.
-HCURSOR CMFCApplication2Dlg::OnQueryDragIcon()
-{
-	return static_cast<HCURSOR>(m_hIcon);
-}
 //======연산자 우선 순위 반환 함수======
 int GetPrecedence(TCHAR op) {
 	if (op == _T('+') || op == _T('-')) return 1;
@@ -222,6 +217,12 @@ double ApplyOp(double a, double b, TCHAR op) {
 	return 0;
 }
 
+// 사용자가 최소화된 창을 끄는 동안에 커서가 표시되도록 시스템에서
+//  이 함수를 호출합니다.
+HCURSOR CMFCApplication2Dlg::OnQueryDragIcon()
+{
+	return static_cast<HCURSOR>(m_hIcon);
+}
 //======입력된 문자열을 계산 하는 함수======
 double CalculateExpression(CString strExpr) {
 
@@ -279,8 +280,371 @@ double CalculateExpression(CString strExpr) {
 	return values.empty() ? 0 : values.top();	//값 스택이 비었냐? 참->0 거짓->마지막 값 반환
 }
 
+#pragma region 버튼 클릭
+void CMFCApplication2Dlg::OnBnClicked1()	
+{
+	AppendString(_T("1"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked2()
+{
+	AppendString(_T("2"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked3()
+{
+	AppendString(_T("3"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked4()
+{
+	AppendString(_T("4"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked5()
+{
+	AppendString(_T("5"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked6()
+{
+	AppendString(_T("6"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked7()
+{
+	AppendString(_T("7"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked8()
+{
+	AppendString(_T("8"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked9()
+{
+	AppendString(_T("9"));
+}
+
+void CMFCApplication2Dlg::OnBnClicked0()
+{
+	AppendString(_T("0"));
+}
+
+void CMFCApplication2Dlg::OnBnClickedDiv()
+{
+	AppendString(_T("/"));
+}
+
+void CMFCApplication2Dlg::OnBnClickedMul()
+{
+	AppendString(_T("*"));
+}
+
+void CMFCApplication2Dlg::OnBnClickedSub()
+{
+	AppendString(_T("-"));
+}
+
+void CMFCApplication2Dlg::OnBnClickedAdd()
+{
+	AppendString(_T("+"));
+}
+
+void CMFCApplication2Dlg::OnBnClickedDat()
+{
+	AppendString(_T("."));
+}
+
+void CMFCApplication2Dlg::OnBnClickedCancel()
+{
+	OnOK();
+}
+
+//======'='버튼 클릭======
+void CMFCApplication2Dlg::OnBnClickedResult()
+{
+	UpdateData(TRUE);
+	m_strInfo = _T("");
+
+	if (m_strResult.IsEmpty()) return;
+
+	int len = m_strResult.GetLength();
+	TCHAR m_strLast = m_strResult[len - 1];
+
+	if (m_bIsCalculated == TRUE)	return;
+
+	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) {	//연산자로 끝날 때
+		m_strInfo = _T("수식을 완성하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+
+	if (m_nOpenParen != 0) {	//괄호가 남아있을 때
+		m_strInfo = _T("괄호를 확인하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+	else
+		m_strInfo = _T("");
+	CString m_strSaveResult = m_strResult;	//기록창에서 원래 수식을 임시로 저장
+	double dResult = CalculateExpression(m_strResult);
+	m_strResult.Format(_T("%g"), dResult);
+
+	m_bIsCalculated = TRUE;
+
+	CString strHistory;
+	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
+	m_listHistory.AddString(strHistory);
+	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);	//인덱스가 0부터 시작해서 -1을함
+
+	CClientDC dc(this);
+	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());
+	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
+	dc.SelectObject(pOldFont);
+
+	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {
+		m_listHistory.SetHorizontalExtent(size.cx + 20);
+	}
+
+	UpdateData(FALSE);
+}
+
+//======'x^2'버튼 클릭======
+void CMFCApplication2Dlg::OnBnClickedSquare()
+{
+	UpdateData(TRUE);
+	m_strInfo = _T("");
+
+	if (m_strResult.IsEmpty())	return;
+
+	int len = m_strResult.GetLength();
+	TCHAR m_strLast = m_strResult[len - 1];
+
+	if (m_nOpenParen != 0) {	//괄호가 남아있을 때
+		m_strInfo = _T("괄호를 확인하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+
+	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) {	//연산자로 끝날 때
+		m_strInfo = _T("수식을 완성하세요.");
+		UpdateData(FALSE);
+		return;
+	}
+
+	CString m_strSaveResult = _T("(") + m_strResult + _T(")") + _T("^2");	//계산식을 임시로 저장
+	double dResult = CalculateExpression(m_strResult) * CalculateExpression(m_strResult);
+	m_strResult.Format(_T("%g"), dResult);
+
+	m_bIsCalculated = TRUE;
+
+	CString strHistory;
+	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
+	m_listHistory.AddString(strHistory);
+	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
+
+	//문자열의 길이에 따라 가로 스크롤 자동 조절 
+	CClientDC dc(this);	//가상의 도화지 같은..?
+	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
+	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
+	dc.SelectObject(pOldFont);
+
+	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
+		m_listHistory.SetHorizontalExtent(size.cx + 20);
+	}
+
+	UpdateData(FALSE);
+}
+
+//======'C'버튼 클릭======
+void CMFCApplication2Dlg::OnBnClickedReset()	
+{
+	m_strResult = _T("");
+	m_strInfo = _T("");
+	m_nOpenParen = 0;
+	
+	UpdateData(FALSE);
+}
+
+//======'CE'버튼 클릭======
+void CMFCApplication2Dlg::OnBnClickedDel()	
+{
+	m_strInfo = _T("");
+	int len = m_strResult.GetLength();
+	if (len > 0) {
+		TCHAR lastChar = m_strResult[len - 1];
+
+		if (lastChar == _T('(')) m_nOpenParen--;
+		else if (lastChar == _T(')')) m_nOpenParen++;
+
+		m_strResult = m_strResult.Left(len - 1);
+		UpdateData(FALSE);
+	}
+}
+
+//======키보드로 입력 가능하게 하는 함수======
+BOOL CMFCApplication2Dlg::PreTranslateMessage(MSG* pMsg)	
+{
+	if (pMsg->message == WM_CHAR)
+	{
+		TCHAR ch = (TCHAR)pMsg->wParam;
+
+		// 숫자이거나 연산자, 소수점인 경우
+		if ((ch >= _T('0') && ch <= _T('9')) ||
+			ch == _T('+') || ch == _T('-') || ch == _T('*') || ch == _T('/') || ch == _T('.')||ch == _T('(')|| ch == _T(')'))
+		{
+			CString strInput;
+			strInput.Format(_T("%c"), ch);
+			AppendString(strInput);  
+
+			return TRUE; // 입력을 가로챘으므로 윈도우에게 "처리 끝났다"고 알려줌
+		}
+
+		// '=' 키를 누르면 결과 계산
+		if (ch == _T('='))
+		{
+			OnBnClickedResult();
+			return TRUE;
+		}
+	}
+
+	// 엔터(계산), 백스페이스(지우기), ESC(초기화)
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		switch (pMsg->wParam)
+		{
+		case VK_RETURN: // 엔터(Enter) 키
+			OnBnClickedResult();
+			return TRUE;
+
+		case VK_BACK:   // 백스페이스(Backspace) 키
+			OnBnClickedDel(); // 만들어두신 지우기 함수 호출
+			return TRUE;
+
+		case VK_ESCAPE: // ESC 키
+			OnBnClickedCancel(); // 만들어두신 초기화 함수 호출
+			return TRUE;
+		case VK_DELETE:
+			OnBnClickedReset();
+			return TRUE;		
+		}
+	}
+
+	//처리하지 않은 나머지 모든 키보드/마우스 입력은 원래대로 작동
+	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+void CMFCApplication2Dlg::OnBnClickedLpar()
+{
+	AppendString(_T("("));
+}
+
+void CMFCApplication2Dlg::OnBnClickedRpar()
+{
+	AppendString(_T(")"));
+}
+
+//======기록창에 있는 목록 누를 때======
+void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
+{
+	int nIndex = m_listHistory.GetCurSel();
+
+	if (nIndex != LB_ERR) {
+		CString strSelected;
+		m_listHistory.GetText(nIndex, strSelected);
+
+		int nPos = strSelected.Find(_T('='));
+		if (nPos != -1) {
+			m_strResult = strSelected.Mid(nPos + 1);
+			m_strResult.Trim(); //양옆 띄어쓰기 지우기
+
+			m_bIsCalculated = TRUE;
+			UpdateData(FALSE);
+		}
+	}
+}
+ 
+//======기록창의 클리어키 누를 때======
+void CMFCApplication2Dlg::OnBnClickedButtonHisClear()
+{
+	UpdateData(TRUE);
+	m_strResult = _T("");
+	m_strInfo = _T("");
+	m_nOpenParen = 0;
+	m_listHistory.ResetContent();
+	UpdateData(FALSE);
+}
+
+//Save 버튼 누를 때
+void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
+{
+	if (m_listHistory.GetCount() == 0) {	//기록이 없을 때
+		m_strInfo = (_T("기록이 없습니다."));
+		UpdateData(FALSE);
+		return;
+	}
+	CTime d = CTime::GetCurrentTime();
+
+	CString strRootFolder = (_T("E:\\log"));	//고정 폴더
+	CString strDataFolder = d.Format(_T("E:\\log\\%y%m%d"));	//새로 생성하는 폴더
+	CString strPath = d.Format(_T("E:\\log\\%y%m%d\\%H.ini"));	//파일 저장 경로
+	if (!PathFileExists(strRootFolder)) {	//폴더가 없으면 생성(메모리 소중)
+		::CreateDirectory(strRootFolder, NULL);
+	}
+	if (!PathFileExists(strDataFolder)) {	//폴더가 없으면 생성(메모리 소중)
+		::CreateDirectory(strDataFolder, NULL);		// :: 는 C++에서 전역 네임스페이스를 명시  사용 이유: 내가 만든게 아닌 윈도우가 제공하는 전용API에서 가져다 쓴 것을 의미
+	}
+
+	int listCount = m_listHistory.GetCount();
+	CStdioFile file;
+	if (file.Open(strPath, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeWrite | CFile::typeText)) {
+		file.SeekToEnd();
+		CString strLine;
+
+		for (int i = 0; i < listCount; i++) {
+			m_listHistory.GetText(i, strLine);
+			strLine += _T("\n");
+			file.WriteString(strLine);
+		}
+		file.Close();
+		GetDlgItem(IDC_BUTTON_HisSave)->EnableWindow(FALSE);
+		SetTimer(1, 500, NULL);	//Save 연속 방지
+	}
+	m_strInfo.Format(_T("Save: %s"), strPath.GetString());
+	UpdateData(FALSE);
+}
+
+//Read 버튼 누를 때
+void CMFCApplication2Dlg::OnBnClickedButtonHisRead()
+{
+	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("텍스트 파일 (*.ini)|*.ini|"));	//읽기 모드
+	if (dlg.DoModal() == IDOK) {	//확인 ID일 때
+
+		CString strPath = dlg.GetPathName();
+
+		CStdioFile file;
+		if (!file.Open(strPath, CFile::modeRead | CFile::typeText)) {
+			m_strInfo = (_T("파일을 열지 못했습니다."));
+			UpdateData(FALSE);
+			return;
+		}
+		m_listHistory.ResetContent();
+
+		CString strLine;
+		while (file.ReadString(strLine)) {
+			m_listHistory.AddString(strLine);
+		}
+		file.Close();
+
+		m_strInfo.Format(_T("Read: %s "), dlg.GetPathName().GetString());
+		UpdateData(FALSE);
+	}
+}
+#pragma endregion
+
 //======버튼 선택시 문자열 처리하는 함수=======
-void CMFCApplication2Dlg::AppendString(CString strInput)	
+void CMFCApplication2Dlg::AppendString(CString strInput)
 {
 	UpdateData(TRUE);
 	m_strInfo = _T("");
@@ -289,7 +653,7 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 	BOOL bIsLastOp = (lastChar == _T('+') || lastChar == _T('-') || lastChar == _T('*') || lastChar == _T('/'));
 
 	BOOL bIsInputOp = (strInput == _T("+") || strInput == _T("-") || strInput == _T("*") || strInput == _T("/"));
-	
+
 	if (m_strResult.IsEmpty() && bIsInputOp) {
 		m_strInfo = _T("맨앞에는 연산자가 올 수 없습니다.");
 		UpdateData(FALSE);
@@ -392,13 +756,13 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 
 			m_bIsCalculated = FALSE;	//처리가 끝났으므로 FALSE처리
 		}
-		else		
+		else
 		{
 			if (m_strResult == _T("0") && !bIsInputOp && strInput != _T("."))	//조건 1. 결과값이 초기값(0)  2. 현재 입력 글자가 연산자가 아니고, 입력 문자가 '.'이 아닐 시
 				m_strResult = strInput;	//현재 입력 문자=결과 변수
 			else
 			{
-				if(!bIsInputOp&&lastChar==_T(')')) m_strResult += _T("*");
+				if (!bIsInputOp && lastChar == _T(')')) m_strResult += _T("*");
 				m_strResult += strInput;	//아니면 입력 문자를 결과 변수에 더하기 (배열 추가)
 			}
 		}
@@ -407,369 +771,19 @@ void CMFCApplication2Dlg::AppendString(CString strInput)
 	UpdateData(FALSE);
 }
 
-void CMFCApplication2Dlg::OnBnClicked1()	
+//======타이머======
+void CMFCApplication2Dlg::OnTimer(UINT_PTR nIDEvent)
 {
-	AppendString(_T("1"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked2()
-{
-	AppendString(_T("2"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked3()
-{
-	AppendString(_T("3"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked4()
-{
-	AppendString(_T("4"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked5()
-{
-	AppendString(_T("5"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked6()
-{
-	AppendString(_T("6"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked7()
-{
-	AppendString(_T("7"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked8()
-{
-	AppendString(_T("8"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked9()
-{
-	AppendString(_T("9"));
-}
-
-void CMFCApplication2Dlg::OnBnClicked0()
-{
-	AppendString(_T("0"));
-}
-
-void CMFCApplication2Dlg::OnBnClickedDiv()
-{
-	AppendString(_T("/"));
-}
-
-void CMFCApplication2Dlg::OnBnClickedMul()
-{
-	AppendString(_T("*"));
-}
-
-void CMFCApplication2Dlg::OnBnClickedSub()
-{
-	AppendString(_T("-"));
-}
-
-void CMFCApplication2Dlg::OnBnClickedAdd()
-{
-	AppendString(_T("+"));
-}
-
-void CMFCApplication2Dlg::OnBnClickedDat()
-{
-	AppendString(_T("."));
-}
-
-void CMFCApplication2Dlg::OnBnClickedCancel()
-{
-	OnOK();
-}
-
-//======'C'버튼 클릭======
-void CMFCApplication2Dlg::OnBnClickedReset()	
-{
-	m_strResult = _T("");
-	m_strInfo = _T("");
-	m_nOpenParen = 0;
-	
-	UpdateData(FALSE);
-}
-
-//======'CE'버튼 클릭======
-void CMFCApplication2Dlg::OnBnClickedDel()	
-{
-	m_strInfo = _T("");
-	int len = m_strResult.GetLength();
-	if (len > 0) {
-		TCHAR lastChar = m_strResult[len - 1];
-
-		if (lastChar == _T('(')) m_nOpenParen--;
-		else if (lastChar == _T(')')) m_nOpenParen++;
-
-		m_strResult = m_strResult.Left(len - 1);
-		UpdateData(FALSE);
+	if (nIDEvent == 1) {
+		GetDlgItem(IDC_BUTTON_HisSave)->EnableWindow(TRUE);
+		KillTimer(1);
 	}
+	CDialogEx::OnTimer(nIDEvent);
 }
 
-//======'x^2'버튼 클릭======
-void CMFCApplication2Dlg::OnBnClickedSquare()	
-{
-	UpdateData(TRUE);
-	m_strInfo = _T("");
-
-	if (m_strResult.IsEmpty())	return;
-
-	int len = m_strResult.GetLength();
-	TCHAR m_strLast = m_strResult[len - 1];
-
-	if (m_nOpenParen != 0) {	//괄호가 남아있을 때
-		m_strInfo = _T("괄호를 확인하세요.");
-		UpdateData(FALSE);
-		return;
-	}
-
-	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) {	//연산자로 끝날 때
-		m_strInfo = _T("수식을 완성하세요.");
-		UpdateData(FALSE);
-		return;
-	}
-	
-	CString m_strSaveResult = _T("(")+ m_strResult+_T(")")+_T("^2");	//계산식을 임시로 저장
-	double dResult = CalculateExpression(m_strResult) * CalculateExpression(m_strResult);
-	m_strResult.Format(_T("%g"), dResult);
-
-	m_bIsCalculated = TRUE;
-
-	CString strHistory;
-	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
-	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);
-
-	//문자열의 길이에 따라 가로 스크롤 자동 조절 
-	CClientDC dc(this);	//가상의 도화지 같은..?
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());	//옛폰트
-	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
-	dc.SelectObject(pOldFont);
-
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {	//GetHorizontalExtent 최대길이 
-		m_listHistory.SetHorizontalExtent(size.cx + 20);
-	}
-
-	UpdateData(FALSE);
-}
-
-//======'='버튼 클릭======
-void CMFCApplication2Dlg::OnBnClickedResult()	
-{
-	UpdateData(TRUE);
-	m_strInfo = _T("");
-
-	if (m_strResult.IsEmpty()) return;
-
-	int len = m_strResult.GetLength();
-	TCHAR m_strLast = m_strResult[len - 1];
-
-	if (m_bIsCalculated == TRUE)	return;
-
-	if (m_strLast == _T('+') || m_strLast == _T('-') || m_strLast == _T('*') || m_strLast == _T('/')) {	//연산자로 끝날 때
-		m_strInfo = _T("수식을 완성하세요.");
-		UpdateData(FALSE);
-		return;
-	}
-
-	if (m_nOpenParen != 0) {	//괄호가 남아있을 때
-		m_strInfo=_T("괄호를 확인하세요.");
-		UpdateData(FALSE);
-		return;
-	}
-	else
-		m_strInfo = _T("");
-	CString m_strSaveResult = m_strResult;	//기록창에서 원래 수식을 임시로 저장
-	double dResult = CalculateExpression(m_strResult);
-	m_strResult.Format(_T("%g"), dResult);
-
-	m_bIsCalculated = TRUE;
-
-	CString strHistory;
-	strHistory.Format(_T("%s = %s"), m_strSaveResult.GetString(), m_strResult.GetString());
-	m_listHistory.AddString(strHistory);
-	m_listHistory.SetCurSel(m_listHistory.GetCount() - 1);	//인덱스가 0부터 시작해서 -1을함
-
-	CClientDC dc(this);
-	CFont* pOldFont = dc.SelectObject(m_listHistory.GetFont());
-	CSize size = dc.GetTextExtent(strHistory); // 입력된 글자의 실제 픽셀 길이를 계산
-	dc.SelectObject(pOldFont);
-
-	if (size.cx + 20 > m_listHistory.GetHorizontalExtent()) {
-		m_listHistory.SetHorizontalExtent(size.cx + 20);
-	}
-
-	UpdateData(FALSE);
-}
-
-//키보드로 입력 가능하게 하는 함수
-BOOL CMFCApplication2Dlg::PreTranslateMessage(MSG* pMsg)	
-{
-	if (pMsg->message == WM_CHAR)
-	{
-		TCHAR ch = (TCHAR)pMsg->wParam;
-
-		// 숫자이거나 연산자, 소수점인 경우
-		if ((ch >= _T('0') && ch <= _T('9')) ||
-			ch == _T('+') || ch == _T('-') || ch == _T('*') || ch == _T('/') || ch == _T('.')||ch == _T('(')|| ch == _T(')'))
-		{
-			CString strInput;
-			strInput.Format(_T("%c"), ch);
-			AppendString(strInput);  
-
-			return TRUE; // 입력을 가로챘으므로 윈도우에게 "처리 끝났다"고 알려줌
-		}
-
-		// '=' 키를 누르면 결과 계산
-		if (ch == _T('='))
-		{
-			OnBnClickedResult();
-			return TRUE;
-		}
-	}
-
-	// 엔터(계산), 백스페이스(지우기), ESC(초기화)
-	if (pMsg->message == WM_KEYDOWN)
-	{
-		switch (pMsg->wParam)
-		{
-		case VK_RETURN: // 엔터(Enter) 키
-			OnBnClickedResult();
-			return TRUE;
-
-		case VK_BACK:   // 백스페이스(Backspace) 키
-			OnBnClickedDel(); // 만들어두신 지우기 함수 호출
-			return TRUE;
-
-		case VK_ESCAPE: // ESC 키
-			OnBnClickedCancel(); // 만들어두신 초기화 함수 호출
-			return TRUE;
-		case VK_DELETE:
-			OnBnClickedReset();
-			return TRUE;		
-		}
-	}
-
-	//처리하지 않은 나머지 모든 키보드/마우스 입력은 원래대로 작동
-	return CDialogEx::PreTranslateMessage(pMsg);
-}
-
-
-void CMFCApplication2Dlg::OnBnClickedLpar()
-{
-	AppendString(_T("("));
-}
-
-void CMFCApplication2Dlg::OnBnClickedRpar()
-{
-	AppendString(_T(")"));
-}
-
-//기록창에 있는 목록 누를 때
-void CMFCApplication2Dlg::OnLbnSelchangeListHistory()
-{
-	int nIndex = m_listHistory.GetCurSel();
-
-	if (nIndex != LB_ERR) {
-		CString strSelected;
-		m_listHistory.GetText(nIndex, strSelected);
-
-		int nPos = strSelected.Find(_T('='));
-		if (nPos != -1) {
-			m_strResult = strSelected.Mid(nPos + 1);
-			m_strResult.Trim(); //양옆 띄어쓰기 지우기
-
-			m_bIsCalculated = TRUE;
-			UpdateData(FALSE);
-		}
-	}
-}
- 
-//기록창의 클리어키 누를 때
-void CMFCApplication2Dlg::OnBnClickedButtonHisClear()
-{
-	UpdateData(TRUE);
-	m_strResult = _T("");
-	m_strInfo = _T("");
-	m_nOpenParen = 0;
-	m_listHistory.ResetContent();
-	UpdateData(FALSE);
-}
-
-//폰트 소멸자
-CMFCApplication2Dlg::~CMFCApplication2Dlg()	
+//======폰트 소멸자======
+CMFCApplication2Dlg::~CMFCApplication2Dlg()
 {
 	if (m_fontResult.GetSafeHandle())
 		m_fontResult.DeleteObject();
-}
-
-//Save 버튼 누를 때
-void CMFCApplication2Dlg::OnBnClickedButtonHisSave()
-{
-	if (m_listHistory.GetCount() == 0) {	//기록이 없을 때
-		m_strInfo = (_T("기록이 없습니다."));
-		UpdateData(FALSE);
-		return;
-	}
-		CTime d = CTime::GetCurrentTime();
-
-		CString strRootFolder = (_T("E:\\log"));	//고정 폴더
-		CString strDataFolder = d.Format(_T("E:\\log\\%y%m%d"));	//새로 생성하는 폴더
-		CString strPath = d.Format(_T("E:\\log\\%y%m%d\\%H.ini"));	//파일 저장 경로
-		if (!PathFileExists(strRootFolder)) {	//폴더가 없으면 생성(메모리 값 보완용)
-			::CreateDirectory(strRootFolder, NULL);
-		}
-		if (!PathFileExists(strDataFolder)) {	//폴더가 없으면 생성(메모리 값 보완용)
-			::CreateDirectory(strDataFolder, NULL);		// :: 는 C++에서 전역 네임스페이스를 명시  사용 이유: 내가 만든게 아닌 윈도우가 제공하는 전용API에서 가져다 쓴 것을 의미
-		}
-		
-		int listCount = m_listHistory.GetCount();
-		CStdioFile file;
-		if (file.Open(strPath, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeWrite | CFile::typeText)) {
-			file.SeekToEnd();
-			CString strLine;
-
-			for (int i = 0; i < listCount; i++) {
-				m_listHistory.GetText(i, strLine);
-				strLine += _T("\n");
-				file.WriteString(strLine);
-			}
-			file.Close();
-		}
-
-		m_strInfo.Format(_T("%s"), strPath.GetString());
-		UpdateData(FALSE);
-}
-
-
-void CMFCApplication2Dlg::OnBnClickedButtonHisread()
-{
-	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("텍스트 파일 (*.ini)|*.ini|모든 파일 (*.*)|*.*||"));
-	if (dlg.DoModal() == IDOK) {
-		CString strPath = dlg.GetPathName(); 
-
-		CStdioFile file;
-		if (!file.Open(strPath, CFile::modeRead|CFile::typeText)) {
-			m_strInfo=(_T("파일을 열지 못했습니다."));
-			UpdateData(FALSE);
-			return;
-		}
-		m_listHistory.ResetContent();
-
-		CString strLine;
-		while (file.ReadString(strLine)) {
-			m_listHistory.AddString(strLine);
-		}
-		file.Close();
-
-		m_strInfo.Format(_T("불러오기 성공"), dlg.GetFileName().GetString());
-		UpdateData(FALSE);	
-	}
 }

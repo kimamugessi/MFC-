@@ -70,5 +70,6 @@ public:
 	CFont m_fontResult; //결과창에 폰트 설정
 
 	afx_msg void OnBnClickedButtonHisSave();
-	afx_msg void OnBnClickedButtonHisread();
+	afx_msg void OnBnClickedButtonHisRead();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
